@@ -6,7 +6,6 @@ class List(models.Model):
     name = models.TextField()
     description = models.TextField(null=True, blank=True)
     url_key = models.CharField(max_length=10)
-    question_text = models.CharField(max_length=200)
     created_at = models.DateTimeField('date created', auto_now_add=True)
     modified_at = models.DateTimeField('date modified', auto_now=True)
     creator = models.ForeignKey(User, on_delete=models.CASCADE)
