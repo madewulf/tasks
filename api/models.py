@@ -14,7 +14,7 @@ class List(models.Model):
     key = models.CharField(max_length=36, default=random_key)
     created_at = models.DateTimeField('date created', auto_now_add=True)
     modified_at = models.DateTimeField('date modified', auto_now=True)
-    creator = models.ForeignKey(User, on_delete=models.CASCADE)
+    creator = models.ForeignKey(User, on_delete=models.CASCADE, null=True, blank=True)
 
     def as_dict(self):
         return {
@@ -43,6 +43,7 @@ class Task(models.Model):
 
     def as_dict(self):
         return {
+            "list": self.list.key,
             "status": self.status,
             "text": self.text,
             "key": self.key,
