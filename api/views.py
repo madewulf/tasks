@@ -8,7 +8,7 @@ import json
 
 @csrf_exempt
 def index(request):
-    return JsonResponse({"result": "Welcome to the teamli.st API"})
+    return JsonResponse({"result": "This is the teamli.st API"})
 
 
 @csrf_exempt
