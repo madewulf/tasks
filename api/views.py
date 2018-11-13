@@ -8,7 +8,7 @@ import json
 
 @csrf_exempt
 def index(request):
-    return JsonResponse({"result": "This is the teamli.st API"})
+    return JsonResponse({"result": "This is the taskli.st API"})
 
 
 @csrf_exempt
@@ -28,9 +28,16 @@ def l(request, key=None):
             li = get_object_or_404(List, key=key)
             body = json.loads(request.body)
             name = body.get("name", None)
+            users = body.get("users", None)
+            if users:
+                for key in users:
+                    profile = Profile.objects.get(key=key)
+                    li.profile_set.add(profile)
             description = body.get("description", None)
-            li.name = name
-            li.description = description
+            if name:
+                li.name = name
+            if description:
+                li.description = description
             li.save()
             return JsonResponse(li.as_dict())
         elif request.method == "DELETE":
@@ -73,7 +80,11 @@ def task(request, key=None):
             status = body.get("status", None)
             text = body.get("text", None)
             index = body.get("index", None)
-
+            users = body.get("users", None)
+            if users:
+                for key in users:
+                    profile = Profile.objects.get(key=key)
+                    task.profile_set.add(profile)
             if li:
                 task.list = li
             if status:
