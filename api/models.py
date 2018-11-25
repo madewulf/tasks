@@ -1,5 +1,5 @@
 from django.db import models
-from django.contrib.auth.models import User
+from django.db.models.functions import Lower
 import random
 
 
@@ -14,7 +14,7 @@ class List(models.Model):
     key = models.CharField(max_length=36, default=random_key)
     created_at = models.DateTimeField("date created", auto_now_add=True)
     modified_at = models.DateTimeField("date modified", auto_now=True)
-    creator = models.ForeignKey(User, on_delete=models.CASCADE, null=True, blank=True)
+    #creator = models.ForeignKey(User, on_delete=models.CASCADE, null=True, blank=True)
 
     def as_dict(self):
         return {
@@ -24,7 +24,7 @@ class List(models.Model):
             "created_at": self.created_at,
             "modified_at": self.modified_at,
             #'creator': self.creator.as_dict(),
-            "members": list(map(lambda profile: profile.as_dict(), self.profile_set.order_by("user__first_name"))),
+            "members": list(map(lambda profile: profile.as_dict(), self.profile_set.order_by("name"))),
             "tasks": list(map(lambda task: task.as_dict(), self.task_set.order_by("index"))),
         }
 
@@ -50,7 +50,7 @@ class Task(models.Model):
             "index": self.index,
             "created_at": self.created_at,
             "modified_at": self.modified_at,
-            "assigned_to": list(map(lambda task: task.as_dict(), self.profile_set.order_by("user__first_name"))),
+            "assigned_to": list(map(lambda task: task.as_dict(), self.profile_set.order_by(Lower("name")))),
         }
 
     def __str__(self):
@@ -58,7 +58,8 @@ class Task(models.Model):
 
 
 class Profile(models.Model):
-    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    #user = models.ForeignKey(User, on_delete=models.CASCADE)
+    name = models.TextField()
     lists = models.ManyToManyField(List)
     tasks = models.ManyToManyField(Task)
     key = models.CharField(max_length=36, default=random_key)
@@ -66,7 +67,7 @@ class Profile(models.Model):
     modified_at = models.DateTimeField("date modified", auto_now=True)
 
     def as_dict(self):
-        return {"name": self.user.first_name, "key": self.key}
+        return {"name": self.name, "key": self.key}
 
     def __str__(self):
-        return "%s " % (self.user,)
+        return "%s - %s" % (self.name, self.key)

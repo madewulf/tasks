@@ -112,10 +112,7 @@ def user(request, key=None):
         if request.method == "POST":
             body = json.loads(request.body)
             name = body.get("name", "None")
-            email = body.get("email", None)
-            user = User(username=email, email=email, first_name=name)
-            user.save()
-            profile = Profile(user=user)
+            profile = Profile(name=name)
             profile.save()
             return JsonResponse(profile.as_dict())
         else:
@@ -127,15 +124,10 @@ def user(request, key=None):
         elif request.method == "PUT":
             profile = get_object_or_404(Profile, key=key)
             body = json.loads(request.body)
-            email = body.get("email", None)
             name = body.get("name", None)
 
-            if email:
-                profile.user.email = email
-                profile.user.username = email
             if name:
-                profile.user.first_name = name
-            profile.user.save()
+                profile.name = name
             profile.save()
             return JsonResponse(profile.as_dict())
         elif request.method == "DELETE":
