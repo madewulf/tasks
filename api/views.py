@@ -1,7 +1,6 @@
 from django.http import JsonResponse
 from django.shortcuts import get_object_or_404
 from .models import Task, List, Profile
-from django.contrib.auth.models import User
 from django.views.decorators.csrf import csrf_exempt
 import json
 
@@ -83,8 +82,13 @@ def task(request, key=None):
             users = body.get("users", None)
             if users:
                 for key in users:
-                    profile = Profile.objects.get(key=key)
-                    task.profile_set.add(profile)
+                    if key.startswith('-'):
+                        key = key[1:]
+                        profile = Profile.objects.get(key=key)
+                        task.profile_set.remove(profile)
+                    else:
+                        profile = Profile.objects.get(key=key)
+                        task.profile_set.add(profile)
             if li:
                 task.list = li
             if status:
@@ -94,8 +98,12 @@ def task(request, key=None):
             if index:
                 task.index = index
             task.status
-            task.save()
-            return JsonResponse(task.as_dict())
+            if text and text.strip() == "":
+                task.delete()
+                JsonResponse({"deleted": "ok"})
+            else:
+                task.save()
+                return JsonResponse(task.as_dict())
         elif request.method == "DELETE":
             task = get_object_or_404(Task, key=key)
             task.delete()
