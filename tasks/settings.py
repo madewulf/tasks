@@ -23,7 +23,7 @@ BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 SECRET_KEY = "+jp(@9s$w)+l^64**=)3ul#y&+sel8cz0nvl(1p#bw$c!5hqbh"
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+DEBUG = os.environ.get('DJANGO_DEBUG', True)
 
 ALLOWED_HOSTS = ["www.localhost", "localhost", "*"]
 
@@ -76,7 +76,24 @@ WSGI_APPLICATION = "tasks.wsgi.application"
 # Database
 # https://docs.djangoproject.com/en/2.1/ref/settings/#databases
 
-DATABASES = {"default": {"ENGINE": "django.db.backends.sqlite3", "NAME": "/tmp/db.sqlite3"}}
+#DATABASES = {"default": {"ENGINE": "django.db.backends.sqlite3", "NAME": "/tmp/db.sqlite3"}}
+
+DB_NAME = os.environ.get('DB_NAME', 'tasklist')
+DB_USERNAME = os.environ.get('DB_USERNAME', 'tasklist')
+DB_PASSWORD = os.environ.get('DB_PASSWORD', None)
+DB_HOST = os.environ.get('DB_HOST', None)
+DB_PORT = os.environ.get('RDS_PORT', 5432)
+
+DATABASES = {
+    'default': {
+        'ENGINE': 'django.contrib.gis.db.backends.postgis',
+        'NAME': DB_NAME,
+        'USER': DB_USERNAME,
+        'PASSWORD': DB_PASSWORD,
+        'HOST': DB_HOST,
+        'PORT': DB_PORT,
+    }
+}
 
 
 # Password validation
