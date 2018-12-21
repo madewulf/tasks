@@ -25,7 +25,7 @@ class List(models.Model):
             "modified_at": self.modified_at,
             #'creator': self.creator.as_dict(),
             "members": list(map(lambda profile: profile.as_dict(), self.profile_set.order_by("name"))),
-            "tasks": list(map(lambda task: task.as_dict(), self.task_set.order_by("index"))),
+            "tasks": list(map(lambda task: task.as_dict(), self.task_set.order_by("created_at"))),
         }
 
     def __str__(self):

@@ -21,7 +21,7 @@ def l(request, key=None):
             li.save()
             return JsonResponse(li.as_dict())
         else:
-            return JsonResponse({"lists": list(map(lambda li: li.as_dict(), List.objects.all()))})
+            return JsonResponse({"lists": "everywhere"})
     else:
         if request.method == "PUT":
             li = get_object_or_404(List, key=key)
