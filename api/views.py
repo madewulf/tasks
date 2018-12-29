@@ -98,7 +98,7 @@ def task(request, key=None):
             if index:
                 task.index = index
             task.status
-            if text and text.strip() == "":
+            if text is not None and text.strip() == "":
                 task.delete()
                 JsonResponse({"deleted": "ok"})
             else:
