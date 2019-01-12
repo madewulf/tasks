@@ -14,6 +14,8 @@ class List(models.Model):
     key = models.CharField(max_length=36, default=random_key)
     created_at = models.DateTimeField("date created", auto_now_add=True)
     modified_at = models.DateTimeField("date modified", auto_now=True)
+    sort = models.CharField(max_length=10, default='created_at')
+
     #creator = models.ForeignKey(User, on_delete=models.CASCADE, null=True, blank=True)
 
     def as_dict(self):
@@ -23,9 +25,10 @@ class List(models.Model):
             "url_key": self.key,
             "created_at": self.created_at,
             "modified_at": self.modified_at,
+            "sort": self.sort,
             #'creator': self.creator.as_dict(),
             "members": list(map(lambda profile: profile.as_dict(), self.profile_set.order_by("name"))),
-            "tasks": list(map(lambda task: task.as_dict(), self.task_set.order_by("created_at"))),
+            "tasks": list(map(lambda task: task.as_dict(), self.task_set.order_by(*self.sort.split(',')))),
         }
 
     def __str__(self):
