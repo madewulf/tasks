@@ -27,7 +27,6 @@ def l(request, key=None):
             li = get_object_or_404(List, key=key)
             body = json.loads(request.body)
             name = body.get("name", None)
-            sort = body.get("sort", None)
             users = body.get("users", None)
 
             if users:
@@ -42,6 +41,9 @@ def l(request, key=None):
             sort = body.get("sort", None)
             if sort:
                 li.sort = sort
+            assignations_on = body.get("assignationsOn", None)
+            if assignations_on:
+                li.assignations_on = assignations_on
             li.save()
             return JsonResponse(li.as_dict())
         elif request.method == "DELETE":

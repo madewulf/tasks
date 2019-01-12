@@ -15,6 +15,7 @@ class List(models.Model):
     created_at = models.DateTimeField("date created", auto_now_add=True)
     modified_at = models.DateTimeField("date modified", auto_now=True)
     sort = models.CharField(max_length=10, default='created_at')
+    assignations_on = models.BooleanField(default=True)
 
     #creator = models.ForeignKey(User, on_delete=models.CASCADE, null=True, blank=True)
 
@@ -26,6 +27,7 @@ class List(models.Model):
             "created_at": self.created_at,
             "modified_at": self.modified_at,
             "sort": self.sort,
+            "assignationsOn": self.assignations_on,
             #'creator': self.creator.as_dict(),
             "members": list(map(lambda profile: profile.as_dict(), self.profile_set.order_by("name"))),
             "tasks": list(map(lambda task: task.as_dict(), self.task_set.order_by(*self.sort.split(',')))),
