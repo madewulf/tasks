@@ -78,7 +78,7 @@ WSGI_APPLICATION = "tasks.wsgi.application"
 
 DB_NAME = os.environ.get('DB_NAME', 'tasklist')
 DB_USERNAME = os.environ.get('DB_USERNAME', 'tasklist')
-DB_PASSWORD = os.environ.get('DB_PASSWORD', None)
+DB_PASSWORD = os.environ.get('DB_PASSWORD', 'tasklist')
 DB_HOST = os.environ.get('DB_HOST', None)
 DB_PORT = os.environ.get('RDS_PORT', 5432)
 
