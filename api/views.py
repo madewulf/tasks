@@ -2,12 +2,26 @@ from django.http import JsonResponse
 from django.shortcuts import get_object_or_404
 from .models import Task, List, Profile
 from django.views.decorators.csrf import csrf_exempt
+from django.contrib.auth import authenticate
+
 import json
 
 
 @csrf_exempt
 def index(request):
     return JsonResponse({"result": "This is the taskli.st API"})
+
+
+@csrf_exempt
+def login(request):
+    if request.method == "POST":
+        body = json.loads(request.body)
+        username = body.get('username', None)
+        password = body.get('password', None)
+        u = authenticate(username=username, password=password)
+        profile = get_object_or_404(Profile, user=u)
+
+    return JsonResponse({"token": profile.auth_token, "profile": profile.as_dict()})
 
 
 @csrf_exempt
@@ -21,7 +35,13 @@ def l(request, key=None):
             li.save()
             return JsonResponse(li.as_dict())
         else:
-            return JsonResponse({"lists": "everywhere"})
+            token = request.META.get("HTTP_X_TASKLIST_TOKEN", None)
+            profile = Profile.objects.filter(auth_token=token).first()
+            if profile:
+                return JsonResponse({"lists": [li.as_dict(False) for li in profile.lists.all()]})
+            else:
+
+                return JsonResponse({"lists": "everywhere"})
     else:
         if request.method == "PUT":
             li = get_object_or_404(List, key=key)
@@ -42,9 +62,10 @@ def l(request, key=None):
             if sort:
                 li.sort = sort
             assignations_on = body.get("assignationsOn", None)
-            if assignations_on:
+            if assignations_on is not None:
                 li.assignations_on = assignations_on
             li.save()
+
             return JsonResponse(li.as_dict())
         elif request.method == "DELETE":
             li = get_object_or_404(List, key=key)

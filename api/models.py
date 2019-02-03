@@ -1,11 +1,12 @@
 from django.db import models
 from django.db.models.functions import Lower
+from django.contrib.auth.models import User
 import random
 
 
-def random_key():
-    charset = "abcdefghijklmnopqrstuvwxyz"
-    return "".join(random.choice(charset) for _ in range(5))
+def random_key(length=8):
+    charset = "abcdefghijklmnopqrstuvwxyz1234567890"
+    return "".join(random.choice(charset) for _ in range(length))
 
 
 class List(models.Model):
@@ -19,8 +20,8 @@ class List(models.Model):
 
     #creator = models.ForeignKey(User, on_delete=models.CASCADE, null=True, blank=True)
 
-    def as_dict(self):
-        return {
+    def as_dict(self, complete=True):
+        res = {
             "name": self.name,
             "description": self.description,
             "url_key": self.key,
@@ -29,9 +30,13 @@ class List(models.Model):
             "sort": self.sort,
             "assignationsOn": self.assignations_on,
             #'creator': self.creator.as_dict(),
-            "members": list(map(lambda profile: profile.as_dict(), self.profile_set.order_by("name"))),
-            "tasks": list(map(lambda task: task.as_dict(), self.task_set.order_by(*self.sort.split(',')))),
         }
+
+        if complete:
+            res["members"] = list(map(lambda profile: profile.as_dict(), self.profile_set.order_by("name")))
+            res["tasks"] = list(map(lambda task: task.as_dict(), self.task_set.order_by(*self.sort.split(','))))
+
+        return res
 
     def __str__(self):
         return "%s - %s" % (self.id, self.name)
@@ -63,7 +68,8 @@ class Task(models.Model):
 
 
 class Profile(models.Model):
-    #user = models.ForeignKey(User, on_delete=models.CASCADE)
+    user = models.ForeignKey(User, on_delete=models.CASCADE, null=True)
+    auth_token = models.CharField(max_length=20, default=random_key)
     name = models.TextField()
     lists = models.ManyToManyField(List)
     tasks = models.ManyToManyField(Task)
