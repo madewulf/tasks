@@ -19,9 +19,11 @@ def login(request):
         username = body.get('username', None)
         password = body.get('password', None)
         u = authenticate(username=username, password=password)
-        profile = get_object_or_404(Profile, user=u)
-
-    return JsonResponse({"token": profile.auth_token, "profile": profile.as_dict()})
+        if u:
+            profile = get_object_or_404(Profile, user=u)
+            return JsonResponse({"token": profile.auth_token, "profile": profile.as_dict()})
+        else:
+            return JsonResponse({"token": None}, status=401)
 
 
 @csrf_exempt
@@ -38,10 +40,10 @@ def l(request, key=None):
             token = request.META.get("HTTP_X_TASKLIST_TOKEN", None)
             profile = Profile.objects.filter(auth_token=token).first()
             if profile:
-                return JsonResponse({"lists": [li.as_dict(False) for li in profile.lists.all()]})
+                return JsonResponse({"lists": [li.as_dict(False) for li in profile.lists.order_by('id')]})
             else:
 
-                return JsonResponse({"lists": "everywhere"})
+                return JsonResponse({"lists": None})
     else:
         if request.method == "PUT":
             li = get_object_or_404(List, key=key)
@@ -73,6 +75,10 @@ def l(request, key=None):
             return JsonResponse({"result": "deleted"})
         else:
             the_list = get_object_or_404(List, key=key)
+            token = request.META.get("HTTP_X_TASKLIST_TOKEN", None)
+            if token:
+                profile = Profile.objects.filter(auth_token=token).first()
+                profile.lists.add(the_list)
     return JsonResponse(the_list.as_dict())
 
 
@@ -138,7 +144,7 @@ def task(request, key=None):
             task.delete()
             return JsonResponse({"result": "deleted"})
         else:
-            return JsonResponse({"error": "Cannot post on existing task"}, status_code=400)
+            return JsonResponse({"error": "Cannot post on existing task"}, status=400)
 
     return JsonResponse({"message": "No task key specified"})
 
@@ -153,7 +159,7 @@ def user(request, key=None):
             profile.save()
             return JsonResponse(profile.as_dict())
         else:
-            return JsonResponse({"error": "You should specify a task key"}, status_code=404)
+            return JsonResponse({"error": "You should specify a task key"}, status=404)
     else:
         if request.method == "GET":
             p = get_object_or_404(Profile, key=key)
@@ -172,6 +178,6 @@ def user(request, key=None):
             profile.delete()
             return JsonResponse({"result": "deleted"})
         else:
-            return JsonResponse({"error": "Cannot post on existing profile"}, status_code=400)
+            return JsonResponse({"error": "Cannot post on existing profile"}, status=400)
 
     return JsonResponse({"message": "No task key specified"})
