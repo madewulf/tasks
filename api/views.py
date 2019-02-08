@@ -3,6 +3,9 @@ from django.shortcuts import get_object_or_404
 from .models import Task, List, Profile
 from django.views.decorators.csrf import csrf_exempt
 from django.contrib.auth import authenticate
+from django.contrib.auth.models import User
+from django.core.exceptions import ValidationError
+from django.core.validators import validate_email
 
 import json
 
@@ -11,6 +14,51 @@ import json
 def index(request):
     return JsonResponse({"result": "This is the taskli.st API"})
 
+@csrf_exempt
+def account(request):
+    if request.method == "POST":
+        body = json.loads(request.body)
+        username = body.get('username', None)
+        name = body.get('name', None)
+        password = body.get('password', None)
+        email = body.get('email', None)
+
+        if not username or username == "":
+            return JsonResponse({"error": "Username should not be blank", "error_code": "USERNAME_BLANK"}, status=400)
+
+        same_email = User.objects.filter(email=email)
+        if len(same_email) > 0 :
+            return JsonResponse({"error": "email already used", "error_code": "EMAIL_ALREADY_USED"}, status=400)
+
+        same_username = User.objects.filter(username=username)
+
+        if len(same_username) > 0 :
+            return JsonResponse({"error": "Username already used", "error_code": "USERNAME_ALREADY_USED"}, status=400)
+
+        if not password or len(password) < 6:
+            return JsonResponse({"error": "Password should be at least 6 letters", "error_code": "PASSWORD_TOO_SHORT"}, status=400)
+
+        if not name or name == "":
+            return JsonResponse({"error": "Name should not be blank", "error_code": "NAME_BLANK"}, status=400)
+
+        if not email:
+            return JsonResponse({"error": "Email should not be blank", "error_code": "EMAIL_BLANK"}, status=400)
+
+        try:
+            validate_email(email)
+        except ValidationError as e:
+            return JsonResponse({"error": "Invalid email address", "error_code": "INVALID_EMAIL"}, status=400)
+
+        u = User()
+        u.username = username
+        u.email = email
+        u.save()
+        u.set_password(password)
+        p = Profile()
+        p.user = u
+        p.name = name
+        p.save()
+        return JsonResponse({"token": p.auth_token, "profile": p.as_dict()})
 
 @csrf_exempt
 def login(request):
@@ -78,7 +126,8 @@ def l(request, key=None):
             token = request.META.get("HTTP_X_TASKLIST_TOKEN", None)
             if token:
                 profile = Profile.objects.filter(auth_token=token).first()
-                profile.lists.add(the_list)
+                if profile:
+                    profile.lists.add(the_list)
     return JsonResponse(the_list.as_dict())
 
 
