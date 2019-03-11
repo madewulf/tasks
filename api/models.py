@@ -15,10 +15,10 @@ class List(models.Model):
     key = models.CharField(max_length=36, default=random_key)
     created_at = models.DateTimeField("date created", auto_now_add=True)
     modified_at = models.DateTimeField("date modified", auto_now=True)
-    sort = models.CharField(max_length=10, default='created_at')
+    sort = models.CharField(max_length=10, default="created_at")
     assignations_on = models.BooleanField(default=True)
-
-    #creator = models.ForeignKey(User, on_delete=models.CASCADE, null=True, blank=True)
+    completed = models.BooleanField(default=False)
+    # creator = models.ForeignKey(User, on_delete=models.CASCADE, null=True, blank=True)
 
     def as_dict(self, complete=True):
         res = {
@@ -34,7 +34,7 @@ class List(models.Model):
 
         if complete:
             res["members"] = list(map(lambda profile: profile.as_dict(), self.profile_set.order_by("name")))
-            res["tasks"] = list(map(lambda task: task.as_dict(), self.task_set.order_by(*self.sort.split(','))))
+            res["tasks"] = list(map(lambda task: task.as_dict(), self.task_set.order_by(*self.sort.split(","))))
 
         return res
 
@@ -72,6 +72,7 @@ class Profile(models.Model):
     auth_token = models.CharField(max_length=20, default=random_key)
     name = models.TextField()
     lists = models.ManyToManyField(List)
+    lists_to_notify = models.ManyToManyField(List, related_name="users_to_notify")
     tasks = models.ManyToManyField(Task)
     key = models.CharField(max_length=36, default=random_key)
     created_at = models.DateTimeField("date created", auto_now_add=True)
@@ -82,3 +83,32 @@ class Profile(models.Model):
 
     def __str__(self):
         return "%s - %s" % (self.name, self.key)
+
+
+class Event(models.Model):
+    TYPE_CHOICES = (
+        ("task_done", "Task done"),
+        ("task_undone", "Task undone"),
+        ("list_completed", "List completed"),
+        ("task_added", "Task added"),
+        ("list_created", "List created"),
+        ("task_edited", "Task edited"),
+        ("list_edited", "List edited"),
+    )
+    list = models.ForeignKey(List, on_delete=models.CASCADE)
+    task = models.ForeignKey(Task, on_delete=models.CASCADE, null=True, blank=True)
+    profile = models.ForeignKey(Profile, on_delete=models.CASCADE)
+    type = models.CharField(max_length=64, choices=TYPE_CHOICES)
+    created_at = models.DateTimeField("date created", auto_now_add=True)
+    old_value = models.TextField(null=True, blank=True)
+    new_value = models.TextField(null=True, blank=True)
+
+    def __str__(self):
+        return "%s - %s - %s - %s - %s - %s" % (
+            self.list,
+            self.task,
+            self.profile,
+            self.type,
+            self.old_value,
+            self.new_value,
+        )
