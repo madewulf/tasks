@@ -86,18 +86,26 @@ class Profile(models.Model):
 
 
 class Event(models.Model):
+    TASK_DONE = "task_done"
+    TASK_UNDONE = "task_undone"
+    LIST_COMPLETED = "list_completed"
+    TASK_ADDED = "task_added"
+    LIST_CREATED = "list_created"
+    TASK_EDITED = "task_edited"
+    LIST_EDITED = "list_edited"
+
     TYPE_CHOICES = (
-        ("task_done", "Task done"),
-        ("task_undone", "Task undone"),
-        ("list_completed", "List completed"),
-        ("task_added", "Task added"),
-        ("list_created", "List created"),
-        ("task_edited", "Task edited"),
-        ("list_edited", "List edited"),
+        (TASK_DONE, "Task done"),
+        (TASK_UNDONE, "Task undone"),
+        (LIST_COMPLETED, "List completed"),
+        (TASK_ADDED, "Task added"),
+        (LIST_CREATED, "List created"),
+        (TASK_EDITED, "Task edited"),
+        (LIST_EDITED, "List edited"),
     )
     list = models.ForeignKey(List, on_delete=models.CASCADE)
     task = models.ForeignKey(Task, on_delete=models.CASCADE, null=True, blank=True)
-    profile = models.ForeignKey(Profile, on_delete=models.CASCADE)
+    profile = models.ForeignKey(Profile, on_delete=models.CASCADE, null=True, blank=True)
     type = models.CharField(max_length=64, choices=TYPE_CHOICES)
     created_at = models.DateTimeField("date created", auto_now_add=True)
     old_value = models.TextField(null=True, blank=True)

@@ -1,11 +1,14 @@
 from django.http import JsonResponse
 from django.shortcuts import get_object_or_404
-from .models import Task, List, Profile
+from .models import Task, List, Profile, Event
+
 from django.views.decorators.csrf import csrf_exempt
 from django.contrib.auth import authenticate
 from django.contrib.auth.models import User
 from django.core.exceptions import ValidationError
 from django.core.validators import validate_email
+from django.core.mail import EmailMessage
+from django.template.loader import render_to_string
 
 import json
 
@@ -76,6 +79,8 @@ def login(request):
 
 @csrf_exempt
 def l(request, key=None):
+    token = request.META.get("HTTP_X_TASKLIST_TOKEN", None)
+    profile = Profile.objects.filter(auth_token=token).first()
     if key is None:
         if request.method == "POST":
             body = json.loads(request.body)
@@ -85,8 +90,6 @@ def l(request, key=None):
             li.save()
             return JsonResponse(li.as_dict())
         else:
-            token = request.META.get("HTTP_X_TASKLIST_TOKEN", None)
-            profile = Profile.objects.filter(auth_token=token).first()
             if profile:
                 return JsonResponse({"lists": [li.as_dict(False) for li in profile.lists.order_by('id')]})
             else:
@@ -133,6 +136,8 @@ def l(request, key=None):
 
 @csrf_exempt
 def task(request, key=None):
+    token = request.META.get("HTTP_X_TASKLIST_TOKEN", None)
+    profile = Profile.objects.filter(auth_token=token).first()
     if key is None:
         if request.method == "POST":
             body = json.loads(request.body)
@@ -167,16 +172,19 @@ def task(request, key=None):
                 for key in users:
                     if key.startswith('-'):
                         key = key[1:]
-                        profile = Profile.objects.get(key=key)
-                        task.profile_set.remove(profile)
+                        prf = Profile.objects.get(key=key)
+                        task.profile_set.remove(prf)
                     else:
-                        profile = Profile.objects.get(key=key)
+                        prf = Profile.objects.get(key=key)
 
-                        task.profile_set.add(profile)
+                        task.profile_set.add(prf)
             if li:
                 task.list = li
             if status:
                 task.status = status
+                if status == "done":
+                    #(li, event_type, ta=None, profile=None, old_value=None):
+                    send_notification_email(task.list, Event.TASK_DONE, task, profile)
             if text:
                 task.text = text
             if index:
@@ -230,3 +238,33 @@ def user(request, key=None):
             return JsonResponse({"error": "Cannot post on existing profile"}, status=400)
 
     return JsonResponse({"message": "No task key specified"})
+
+
+def send_notification_email(li, event_type, ta=None, profile=None, old_value=None):
+
+    emails = [profile.user.email for profile in li.users_to_notify.all()]
+
+    if event_type == Event.TASK_DONE:
+        title = 'Task "%s" done' % ta.text
+        content = 'everything is in the title'
+        render_to_string(
+            "notification_email.html",
+            {"title": title, "content": content},
+        )
+
+    msg = EmailMessage(
+        title,
+        content,
+        "no-reply@taskli.st",
+        emails,
+    )
+    msg.content_subtype = "html"  # Main content is now text/html
+    msg.send()
+
+    e = Event()
+    e.type = event_type
+    e.list = li
+    e.task = ta
+    e.profile = profile
+    e.old_value = old_value
+    e.save()
