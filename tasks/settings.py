@@ -16,14 +16,19 @@ import os
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
 
-# Quick-start development settings - unsuitable for production
-# See https://docs.djangoproject.com/en/2.1/howto/deployment/checklist/
+DEBUG = os.environ.get("DJANGO_DEBUG", False)
 
-# SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = "+jp(@9s$w)+l^64**=)3ul#y&+sel8cz0nvl(1p#bw$c!5hqbh"
-
-# SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = os.environ.get('DJANGO_DEBUG', True)
+EMAIL_BACKEND = os.environ.get(
+    "EMAIL_BACKEND", "django.core.mail.backends.console.EmailBackend"
+)
+AWS_SES_REGION_NAME = os.environ.get("AWS_SES_REGION_NAME", "eu-west-1")
+AWS_SES_REGION_ENDPOINT = os.environ.get(
+    "AWS_SES_REGION_ENDPOINT", "email.eu-west-1.amazonaws.com"
+)
+AWS_SES_ACCESS_KEY_ID = os.environ.get("AKIAIN4DUHW4SYUWUVCQ", None)
+AWS_SES_SECRET_ACCESS_KEY = os.environ.get(
+    "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", None
+)
 
 ALLOWED_HOSTS = ["www.localhost", "localhost", "*"]
 
@@ -35,14 +40,14 @@ INSTALLED_APPS = [
     "django.contrib.auth",
     "django.contrib.contenttypes",
     "django.contrib.sessions",
-    'corsheaders',
+    "corsheaders",
     "api",
 ]
 
 MIDDLEWARE = [
     "django.middleware.security.SecurityMiddleware",
     "django.contrib.sessions.middleware.SessionMiddleware",
-    'corsheaders.middleware.CorsMiddleware',
+    "corsheaders.middleware.CorsMiddleware",
     "django.middleware.common.CommonMiddleware",
     "django.middleware.csrf.CsrfViewMiddleware",
     "django.contrib.auth.middleware.AuthenticationMiddleware",
@@ -74,22 +79,22 @@ WSGI_APPLICATION = "tasks.wsgi.application"
 # Database
 # https://docs.djangoproject.com/en/2.1/ref/settings/#databases
 
-#DATABASES = {"default": {"ENGINE": "django.db.backends.sqlite3", "NAME": "/tmp/db.sqlite3"}}
+# DATABASES = {"default": {"ENGINE": "django.db.backends.sqlite3", "NAME": "/tmp/db.sqlite3"}}
 
-DB_NAME = os.environ.get('DB_NAME', 'tasklist')
-DB_USERNAME = os.environ.get('DB_USERNAME', 'tasklist')
-DB_PASSWORD = os.environ.get('DB_PASSWORD', 'tasklist')
-DB_HOST = os.environ.get('DB_HOST', None)
-DB_PORT = os.environ.get('RDS_PORT', 5432)
+DB_NAME = os.environ.get("DB_NAME", "tasklist")
+DB_USERNAME = os.environ.get("DB_USERNAME", "tasklist")
+DB_PASSWORD = os.environ.get("DB_PASSWORD", "tasklist")
+DB_HOST = os.environ.get("DB_HOST", None)
+DB_PORT = os.environ.get("RDS_PORT", 5432)
 
 DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.postgresql',
-        'NAME': DB_NAME,
-        'USER': DB_USERNAME,
-        'PASSWORD': DB_PASSWORD,
-        'HOST': DB_HOST,
-        'PORT': DB_PORT,
+    "default": {
+        "ENGINE": "django.db.backends.postgresql",
+        "NAME": DB_NAME,
+        "USER": DB_USERNAME,
+        "PASSWORD": DB_PASSWORD,
+        "HOST": DB_HOST,
+        "PORT": DB_PORT,
     }
 }
 
@@ -98,7 +103,9 @@ DATABASES = {
 # https://docs.djangoproject.com/en/2.1/ref/settings/#auth-password-validators
 
 AUTH_PASSWORD_VALIDATORS = [
-    {"NAME": "django.contrib.auth.password_validation.UserAttributeSimilarityValidator"},
+    {
+        "NAME": "django.contrib.auth.password_validation.UserAttributeSimilarityValidator"
+    },
     {"NAME": "django.contrib.auth.password_validation.MinimumLengthValidator"},
     {"NAME": "django.contrib.auth.password_validation.CommonPasswordValidator"},
     {"NAME": "django.contrib.auth.password_validation.NumericPasswordValidator"},
@@ -127,14 +134,14 @@ STATIC_URL = "/static/"
 
 CORS_ORIGIN_ALLOW_ALL = True
 CORS_ALLOW_HEADERS = (
-    'accept',
-    'accept-encoding',
-    'authorization',
-    'content-type',
-    'dnt',
-    'origin',
-    'user-agent',
-    'x-csrftoken',
-    'x-requested-with',
-    'x-tasklist-token'
+    "accept",
+    "accept-encoding",
+    "authorization",
+    "content-type",
+    "dnt",
+    "origin",
+    "user-agent",
+    "x-csrftoken",
+    "x-requested-with",
+    "x-tasklist-token",
 )

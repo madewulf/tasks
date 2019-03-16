@@ -9,6 +9,7 @@ from django.core.exceptions import ValidationError
 from django.core.validators import validate_email
 from django.core.mail import EmailMessage
 from django.template.loader import render_to_string
+from django.shortcuts import render
 
 import json
 
@@ -17,40 +18,71 @@ import json
 def index(request):
     return JsonResponse({"result": "This is the taskli.st API"})
 
+
 @csrf_exempt
 def account(request):
     if request.method == "POST":
         body = json.loads(request.body)
-        username = body.get('username', None)
-        name = body.get('name', None)
-        password = body.get('password', None)
-        email = body.get('email', None)
+        username = body.get("username", None)
+        name = body.get("name", None)
+        password = body.get("password", None)
+        email = body.get("email", None)
 
         if not username or username == "":
-            return JsonResponse({"error": "Username should not be blank", "error_code": "USERNAME_BLANK"}, status=400)
+            return JsonResponse(
+                {
+                    "error": "Username should not be blank",
+                    "error_code": "USERNAME_BLANK",
+                },
+                status=400,
+            )
 
         same_email = User.objects.filter(email=email)
-        if len(same_email) > 0 :
-            return JsonResponse({"error": "email already used", "error_code": "EMAIL_ALREADY_USED"}, status=400)
+        if len(same_email) > 0:
+            return JsonResponse(
+                {"error": "email already used", "error_code": "EMAIL_ALREADY_USED"},
+                status=400,
+            )
 
         same_username = User.objects.filter(username=username)
 
-        if len(same_username) > 0 :
-            return JsonResponse({"error": "Username already used", "error_code": "USERNAME_ALREADY_USED"}, status=400)
+        if len(same_username) > 0:
+            return JsonResponse(
+                {
+                    "error": "Username already used",
+                    "error_code": "USERNAME_ALREADY_USED",
+                },
+                status=400,
+            )
 
         if not password or len(password) < 6:
-            return JsonResponse({"error": "Password should be at least 6 letters", "error_code": "PASSWORD_TOO_SHORT"}, status=400)
+            return JsonResponse(
+                {
+                    "error": "Password should be at least 6 letters",
+                    "error_code": "PASSWORD_TOO_SHORT",
+                },
+                status=400,
+            )
 
         if not name or name == "":
-            return JsonResponse({"error": "Name should not be blank", "error_code": "NAME_BLANK"}, status=400)
+            return JsonResponse(
+                {"error": "Name should not be blank", "error_code": "NAME_BLANK"},
+                status=400,
+            )
 
         if not email:
-            return JsonResponse({"error": "Email should not be blank", "error_code": "EMAIL_BLANK"}, status=400)
+            return JsonResponse(
+                {"error": "Email should not be blank", "error_code": "EMAIL_BLANK"},
+                status=400,
+            )
 
         try:
             validate_email(email)
         except ValidationError as e:
-            return JsonResponse({"error": "Invalid email address", "error_code": "INVALID_EMAIL"}, status=400)
+            return JsonResponse(
+                {"error": "Invalid email address", "error_code": "INVALID_EMAIL"},
+                status=400,
+            )
 
         u = User()
         u.username = username
@@ -63,16 +95,19 @@ def account(request):
         p.save()
         return JsonResponse({"token": p.auth_token, "profile": p.as_dict()})
 
+
 @csrf_exempt
 def login(request):
     if request.method == "POST":
         body = json.loads(request.body)
-        username = body.get('username', None)
-        password = body.get('password', None)
+        username = body.get("username", None)
+        password = body.get("password", None)
         u = authenticate(username=username, password=password)
         if u:
             profile = get_object_or_404(Profile, user=u)
-            return JsonResponse({"token": profile.auth_token, "profile": profile.as_dict()})
+            return JsonResponse(
+                {"token": profile.auth_token, "profile": profile.as_dict()}
+            )
         else:
             return JsonResponse({"token": None}, status=401)
 
@@ -91,7 +126,13 @@ def l(request, key=None):
             return JsonResponse(li.as_dict())
         else:
             if profile:
-                return JsonResponse({"lists": [li.as_dict(False) for li in profile.lists.order_by('id')]})
+                return JsonResponse(
+                    {
+                        "lists": [
+                            li.as_dict(False) for li in profile.lists.order_by("id")
+                        ]
+                    }
+                )
             else:
 
                 return JsonResponse({"lists": None})
@@ -151,7 +192,9 @@ def task(request, key=None):
             task.save()
             return JsonResponse(task.as_dict())
         else:
-            return JsonResponse({"error": "You should specify a task key"}, status_code=404)
+            return JsonResponse(
+                {"error": "You should specify a task key"}, status_code=404
+            )
     else:
         if request.method == "GET":
             t = get_object_or_404(Task, key=key)
@@ -170,7 +213,7 @@ def task(request, key=None):
             users = body.get("users", None)
             if users:
                 for key in users:
-                    if key.startswith('-'):
+                    if key.startswith("-"):
                         key = key[1:]
                         prf = Profile.objects.get(key=key)
                         task.profile_set.remove(prf)
@@ -183,7 +226,7 @@ def task(request, key=None):
             if status:
                 task.status = status
                 if status == "done":
-                    #(li, event_type, ta=None, profile=None, old_value=None):
+                    # (li, event_type, ta=None, profile=None, old_value=None):
                     send_notification_email(task.list, Event.TASK_DONE, task, profile)
             if text:
                 task.text = text
@@ -235,31 +278,38 @@ def user(request, key=None):
             profile.delete()
             return JsonResponse({"result": "deleted"})
         else:
-            return JsonResponse({"error": "Cannot post on existing profile"}, status=400)
+            return JsonResponse(
+                {"error": "Cannot post on existing profile"}, status=400
+            )
 
     return JsonResponse({"message": "No task key specified"})
 
 
+def unsubscribe(request, private_key, task_list_key):
+    return render(request, "unsubscribe.html", {})
+
+
 def send_notification_email(li, event_type, ta=None, profile=None, old_value=None):
-
-    emails = [profile.user.email for profile in li.users_to_notify.all()]
-
     if event_type == Event.TASK_DONE:
         title = 'Task "%s" done' % ta.text
-        content = 'everything is in the title'
-        render_to_string(
-            "notification_email.html",
-            {"title": title, "content": content},
+        content = (
+            "The task has been completed" + " "
+            if profile == None
+            else " by " + profile.name
         )
 
-    msg = EmailMessage(
-        title,
-        content,
-        "no-reply@taskli.st",
-        emails,
-    )
-    msg.content_subtype = "html"  # Main content is now text/html
-    msg.send()
+    for profile in li.users_to_notify.all():
+        msg = EmailMessage(
+            title,
+            render_to_string(
+                "notification_email.html",
+                {"title": title, "content": content, "profile": profile},
+            ),
+            "no-reply@taskli.st",
+            [profile.user.email],
+        )
+        msg.content_subtype = "html"  # Main content is now text/html
+        msg.send()
 
     e = Event()
     e.type = event_type

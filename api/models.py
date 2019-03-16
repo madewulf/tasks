@@ -33,8 +33,17 @@ class List(models.Model):
         }
 
         if complete:
-            res["members"] = list(map(lambda profile: profile.as_dict(), self.profile_set.order_by("name")))
-            res["tasks"] = list(map(lambda task: task.as_dict(), self.task_set.order_by(*self.sort.split(","))))
+            res["members"] = list(
+                map(
+                    lambda profile: profile.as_dict(), self.profile_set.order_by("name")
+                )
+            )
+            res["tasks"] = list(
+                map(
+                    lambda task: task.as_dict(),
+                    self.task_set.order_by(*self.sort.split(",")),
+                )
+            )
 
         return res
 
@@ -60,7 +69,12 @@ class Task(models.Model):
             "index": self.index,
             "created_at": self.created_at,
             "modified_at": self.modified_at,
-            "assigned_to": list(map(lambda task: task.as_dict(), self.profile_set.order_by(Lower("name")))),
+            "assigned_to": list(
+                map(
+                    lambda task: task.as_dict(),
+                    self.profile_set.order_by(Lower("name")),
+                )
+            ),
         }
 
     def __str__(self):
@@ -75,6 +89,7 @@ class Profile(models.Model):
     lists_to_notify = models.ManyToManyField(List, related_name="users_to_notify")
     tasks = models.ManyToManyField(Task)
     key = models.CharField(max_length=36, default=random_key)
+    private_key = models.CharField(max_length=36, default=random_key)
     created_at = models.DateTimeField("date created", auto_now_add=True)
     modified_at = models.DateTimeField("date modified", auto_now=True)
 
@@ -105,7 +120,9 @@ class Event(models.Model):
     )
     list = models.ForeignKey(List, on_delete=models.CASCADE)
     task = models.ForeignKey(Task, on_delete=models.CASCADE, null=True, blank=True)
-    profile = models.ForeignKey(Profile, on_delete=models.CASCADE, null=True, blank=True)
+    profile = models.ForeignKey(
+        Profile, on_delete=models.CASCADE, null=True, blank=True
+    )
     type = models.CharField(max_length=64, choices=TYPE_CHOICES)
     created_at = models.DateTimeField("date created", auto_now_add=True)
     old_value = models.TextField(null=True, blank=True)
