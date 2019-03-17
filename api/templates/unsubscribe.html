@@ -1,5 +1,22 @@
 {% extends "base.html" %}
 {% load i18n %}
 {% block content %}
-<div>Coucou</div>
+<h1>task.list</h1>
+<h2>Email unsubscribe</h2>
+{% if already_done %}
+   <div> You have been unsubscribed.</div>
+{%else%}
+{% if list %}
+    <div>Hi {{profile.name}}, do you really want to unsubscribe from list "{{ list.name }} "</div>
+{% else %}
+    <div>Hi {{profile.name}}, do you really want to unsubscribe from all taskli.st emails?</div>
+{% endif %}
+<div><form method="post">
+    {% csrf_token %}
+    <input id="profile_private_key" name="profile_private_key" type="hidden" value="{{ profile.private_key }}">
+    <input id="list_id" name="list_id" type="hidden" value="{{ list.id }}">
+    <input type="submit" value="Yes"/>
+</form>
+    </div>
+{%endif%}
 {% endblock %}

@@ -15,7 +15,7 @@ import os
 # Build paths inside the project like this: os.path.join(BASE_DIR, ...)
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
-
+SECRET_KEY = os.environ.get("SECRET_KEY", "")
 DEBUG = os.environ.get("DJANGO_DEBUG", False)
 
 EMAIL_BACKEND = os.environ.get(
@@ -29,6 +29,9 @@ AWS_SES_ACCESS_KEY_ID = os.environ.get("AKIAIN4DUHW4SYUWUVCQ", None)
 AWS_SES_SECRET_ACCESS_KEY = os.environ.get(
     "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", None
 )
+
+BACKEND_DOMAIN = os.environ.get("BACKEND_DOMAIN", "api.taskli.st")
+FRONTEND_DOMAIN = os.environ.get("FRONTEND_DOMAIN", "www.taskli.st")
 
 ALLOWED_HOSTS = ["www.localhost", "localhost", "*"]
 

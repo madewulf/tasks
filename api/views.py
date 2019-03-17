@@ -9,7 +9,9 @@ from django.core.exceptions import ValidationError
 from django.core.validators import validate_email
 from django.core.mail import EmailMessage
 from django.template.loader import render_to_string
-from django.shortcuts import render
+from django.shortcuts import render, redirect
+from django.conf import settings
+from django.urls import reverse
 
 import json
 
@@ -285,8 +287,26 @@ def user(request, key=None):
     return JsonResponse({"message": "No task key specified"})
 
 
-def unsubscribe(request, private_key, task_list_key):
-    return render(request, "unsubscribe.html", {})
+def unsubscribe(request, private_key, task_list_key=None):
+    profile = get_object_or_404(Profile, private_key=private_key)
+    li = List.objects.filter(key=task_list_key).first()
+    if task_list_key and li not in profile.lists_to_notify.all():
+        return render(
+            request,
+            "unsubscribe.html",
+            {"title": "NOTHING TO DO", "already_done": True},
+        )
+    if request.method == "POST":
+        if li:
+            profile.lists_to_notify.remove(li)
+        else:
+            profile.lists_to_notify.set([])
+        return redirect(request.build_absolute_uri())
+    return render(
+        request,
+        "unsubscribe.html",
+        {"title": "Unsubscribe", "profile": profile, "list": li},
+    )
 
 
 def send_notification_email(li, event_type, ta=None, profile=None, old_value=None):
@@ -299,11 +319,30 @@ def send_notification_email(li, event_type, ta=None, profile=None, old_value=Non
         )
 
     for profile in li.users_to_notify.all():
+        list_unsubscribe_link = "https://%s%s" % (
+            settings.BACKEND_DOMAIN,
+            reverse(
+                "unsubscribe",
+                kwargs={"private_key": profile.private_key, "task_list_key": li.key},
+            ),
+        )
+        user_unsubscribe_link = "https://%s%s" % (
+            settings.BACKEND_DOMAIN,
+            reverse("unsubscribe", kwargs={"private_key": profile.private_key}),
+        )
         msg = EmailMessage(
             title,
             render_to_string(
                 "notification_email.html",
-                {"title": title, "content": content, "profile": profile},
+                {
+                    "title": title,
+                    "content": content,
+                    "profile": profile,
+                    "list": li,
+                    "list_unsubscribe_link": list_unsubscribe_link,
+                    "domain": settings.FRONTEND_DOMAIN,
+                    "user_unsubscribe_link": user_unsubscribe_link,
+                },
             ),
             "no-reply@taskli.st",
             [profile.user.email],
