@@ -25,10 +25,8 @@ AWS_SES_REGION_NAME = os.environ.get("AWS_SES_REGION_NAME", "eu-west-1")
 AWS_SES_REGION_ENDPOINT = os.environ.get(
     "AWS_SES_REGION_ENDPOINT", "email.eu-west-1.amazonaws.com"
 )
-AWS_SES_ACCESS_KEY_ID = os.environ.get("AKIAIN4DUHW4SYUWUVCQ", None)
-AWS_SES_SECRET_ACCESS_KEY = os.environ.get(
-    "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", None
-)
+AWS_SES_ACCESS_KEY_ID = os.environ.get("AWS_SES_ACCESS_KEY_ID", None)
+AWS_SES_SECRET_ACCESS_KEY = os.environ.get("AWS_SES_SECRET_ACCESS_KEY", None)
 
 BACKEND_DOMAIN = os.environ.get("BACKEND_DOMAIN", "api.taskli.st")
 FRONTEND_DOMAIN = os.environ.get("FRONTEND_DOMAIN", "www.taskli.st")

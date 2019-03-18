@@ -287,6 +287,17 @@ def user(request, key=None):
     return JsonResponse({"message": "No task key specified"})
 
 
+@csrf_exempt
+def subscribe(request, key):
+    if request.method == "POST":
+        body = json.loads(request.body)
+        token = body.get("token", None)
+        profile = Profile.objects.filter(auth_token=token).first()
+        li = get_object_or_404(List, key=key)
+        profile.lists_to_notify.add(li)
+    return JsonResponse({"message": "Subscribed to list"})
+
+
 def unsubscribe(request, private_key, task_list_key=None):
     profile = get_object_or_404(Profile, private_key=private_key)
     li = List.objects.filter(key=task_list_key).first()
@@ -310,11 +321,17 @@ def unsubscribe(request, private_key, task_list_key=None):
 
 
 def send_notification_email(li, event_type, ta=None, profile=None, old_value=None):
+    list_url = "https://%s%s" % (
+        settings.FRONTEND_DOMAIN,
+        reverse("list_api", kwargs={"key": li.key}),
+    )
     if event_type == Event.TASK_DONE:
         title = 'Task "%s" done' % ta.text
         content = (
-            "The task has been completed" + " "
-            if profile == None
+            'The task "%s" has been completed in the list "<a href="%s">%s</a>"'
+            % (ta.text, list_url, li.name)
+            + " "
+            if profile is None
             else " by " + profile.name
         )
 
@@ -339,8 +356,8 @@ def send_notification_email(li, event_type, ta=None, profile=None, old_value=Non
                     "content": content,
                     "profile": profile,
                     "list": li,
-                    "list_unsubscribe_link": list_unsubscribe_link,
                     "domain": settings.FRONTEND_DOMAIN,
+                    "list_unsubscribe_link": list_unsubscribe_link,
                     "user_unsubscribe_link": user_unsubscribe_link,
                 },
             ),

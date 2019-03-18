@@ -13,6 +13,7 @@ urlpatterns = [
     path("account/", views.account, name="account_creation"),
     path("u/<slug:key>/", views.user, name="user_api"),
     path("unsubscribe/<slug:private_key>/", views.unsubscribe, name="unsubscribe"),
+    path("subscribe/<slug:key>/", views.subscribe, name="subscribe"),
     path(
         "unsubscribe/<slug:private_key>/<slug:task_list_key>/",
         views.unsubscribe,
